@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import './App.css';
 import CodeBox from './CodeBox';
 import { createWorker } from "./db";
+import Map from "./Map";
 
 function App() {
   const [feedCode, setFeedCode] = useState('STM');
@@ -56,6 +57,7 @@ function App() {
         </div>
       </div>
       <CodeBox sendQuery={setQuery}/>
+      <Map />
     </div>
   );
 }
