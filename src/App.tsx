@@ -3,8 +3,10 @@ import './App.css';
 import CodeBox from './CodeBox';
 import { createWorker } from "./db";
 import Map from "./Map";
+import Table from "./Table";
 
 function App() {
+  const [view, setView] = useState<'table'|'map'>('table');
   const [feedCode, setFeedCode] = useState('STM');
   const [step, setStep] = useState('PRE');
   const [worker, setWorker] = useState<Awaited<ReturnType<typeof createWorker>>|null>(null);
@@ -54,10 +56,14 @@ function App() {
             step:
             <input value={step} onChange={e => setStep(e.target.value)} />
           </label>
+          <label>
+            view:
+            <button onClick={() => setView(view === 'table' ? 'map' : 'table')}>{view}</button>
+          </label>
         </div>
       </div>
       <CodeBox sendQuery={setQuery}/>
-      <Map />
+      {view === 'table' ? <Table /> : <Map />}
     </div>
   );
 }
