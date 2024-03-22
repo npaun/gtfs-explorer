@@ -16,6 +16,7 @@ export default function Map({ sqlResult }: {sqlResult:{error:unknown}|{data:[{co
     }
 
     addMarkersToMap(sqlResult, map.current, markers.current);
+    addShapesToMap(sqlResult, map.current);
 
   }, [zoom, sqlResult]);
 
@@ -144,7 +145,127 @@ class Stop {
   }
 }
 
+
+class Point {
+  lat: number;
+  lon: number;
+
+  constructor(lat: string, lon: string) {
+    this.lat = parseFloat(lat);
+    this.lon = parseFloat(lon);
+  }
+}
+
+
+class Shape {
+  id: string;
+  points: Array<Point>;
+
+  static compareShapeId(a: Array<string>, b: Array<string>) {
+    if (a[0] < b[0]) {
+      return -1;
+    }
+    else if (a[0] > b[0]) {
+      return 1;
+    }
+    else {
+      return 0;
+    }
+  }
+
+  static compareSequence(a: Array<any>, b: Array<any>) {
+    return a[3] - b[3];
+  }
+
+  constructor(arr: Array<Array<any>>) {
+    this.id = arr[0][0];
+    this.points = [];
+
+    const filteredArray = [];
+    for (const row of arr) {
+      if (row[0] !== this.id) {
+        continue;
+      }
+      row[3] = parseInt(row[3]);
+      filteredArray.push(row);
+    }
+    filteredArray.sort(Shape.compareSequence);
+    let lastSeq = -1;
+    for (const row of filteredArray) {
+      if (lastSeq === row[3]) {
+        continue;
+      }
+      lastSeq = row[3];
+      this.points.push(new Point(row[1], row[2]));
+    }
+  }
+
+  static readonly PROPERTIES: Array<string> = ['shape_id', 'shape_pt_lat', 'shape_pt_lon', 'shape_pt_sequence'];
+
+  static view(results: any): Array<Shape> {
+    const shapeView = new TableView(results, Shape.PROPERTIES);
+    const rows = shapeView.rows().sort(Shape.compareShapeId);
+    if (rows.length === 0) {
+      return [];
+    }
+    let lastShapeId = rows[0][0];
+    let lastShape = [];
+    const shapes = [];
+    for (const shp of shapeView.rows().sort(Shape.compareShapeId))  {
+      if (lastShapeId !== shp[0]) {
+        shapes.push(new Shape(lastShape));
+        lastShape = [];
+        lastShapeId = shp[0];
+      }
+      lastShape.push(shp);
+    }
+    if (lastShapeId !== '') {
+      shapes.push(new Shape(lastShape));
+    }
+    return shapes;
+  }
+}
+
 const MaxStops = 1000;
+
+function addShapesToMap(results: any, map: maplibregl.Map|null) {
+  if (map === null) {
+    return;
+  }
+
+  let nShapes = 0;
+  for (const shape of Shape.view(results)) {
+    nShapes++;
+    if (nShapes === MaxStops) {
+      break;
+    }
+    console.log(shape);
+/*    map.addLayer({
+        id: shape.id,
+        type: 'line',
+        source: {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: shape.points.map((pt: Point) => [pt.lon, pt.lat])
+            }
+          }
+        },
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#ff0000', // Line color
+          'line-width': 2 // Line width in pixels
+        }
+    });*/
+  }
+}
+
 
 function addMarkersToMap(results: any, map: maplibregl.Map|null, markers: Array<maplibregl.Marker>|null) {
   if (map === null || markers === null) {
@@ -166,6 +287,9 @@ function addMarkersToMap(results: any, map: maplibregl.Map|null, markers: Array<
   const bounds = new maplibregl.LngLatBounds();
   let nCoords = 0;
   for (const stop of stops) {
+    if (!isFinite(stop.lon) || !isFinite(stop.lat)) {
+      continue;
+    }
     bounds.extend([stop.lon, stop.lat]);
     const marker = getMarker(stop, map);
     markers.push(marker);
@@ -173,6 +297,10 @@ function addMarkersToMap(results: any, map: maplibregl.Map|null, markers: Array<
     if (nCoords >= MaxStops) {
         break;
     }
+  }
+
+  if (nCoords === 0) {
+    return;
   }
 
   map.fitBounds(bounds, {
