@@ -8,22 +8,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMap, faTable } from '@fortawesome/free-solid-svg-icons';
 
 function App() {
-  const fakeRows = [
-    ["1234", "Highway 6 / Slocan Park", "49.0000", "-117.1234"],
-    ["1235", "Nelson: Ward / Baker", "49.5555", "-117.3333"],
-    ["1236", "KBR Hospital", "49.001", "-117.000"],
-    ["1237", "Castlegar: Selkirk College", "49.00067", "-117.002020"]
-  ];
-  const fakeData = [
-    ["stop_id", "stop_name", "stop_lat", "stop_lon"],
-    ...fakeRows,
-    ...fakeRows,
-    ...fakeRows,
-    ...fakeRows,
-    ...fakeRows,
-    ...fakeRows
-  ];
-
   const [view, setView] = useState<'table'|'map'>('table');
   const [feedCode, setFeedCode] = useState('STM');
   const [step, setStep] = useState('PRE');
@@ -44,6 +28,7 @@ function App() {
   }, [feedCode, step]);
 
   useEffect(() => {
+    console.log('query effect');
     if (query && query.endsWith(";")) {
       if (!worker) {
         setSqlResult({ error: "Not connected to the database" });
