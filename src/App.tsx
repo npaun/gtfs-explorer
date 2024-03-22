@@ -78,7 +78,7 @@ function App() {
         </div>
         <CodeBox sendQuery={setQuery}/>
       </div>
-      {view === 'table' ? <Table sqlResult={sqlResult} /> : <Map />}
+      {view === 'table' ? <Table sqlResult={sqlResult} /> : <Map sqlResult={sqlResult} />}
     </div>
   );
 }
