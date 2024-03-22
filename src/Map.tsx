@@ -271,7 +271,7 @@ function addShapesToMap(results: any, map: maplibregl.Map|null, bounds: any) {
     'features': features
   };
 
-  console.log(features);
+  // TODO: display this geojson on the map
 }
 
 
