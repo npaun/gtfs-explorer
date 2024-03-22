@@ -42,7 +42,7 @@ export default function Map({ sqlResult }: {sqlResult:{error:unknown}|{data:[{co
     });
 
     addMarkersToMap(sqlResult, map.current);
-  }, [lng, lat, zoom]);
+  }, [lng, lat, zoom, sqlResult]);
 
   return (
     <div className="map-wrap">
@@ -56,7 +56,8 @@ class TableView {
   _rows : any;
   indices : any;
 
-  constructor(results : any, colNames : any) {
+  constructor(results: any, colNames: any, optionalColNames?: any) {
+      console.log(optionalColNames);
       this.indices = [];
       if (!results || !('data' in results) || results.data.length === 0 || results.data[0].values.length === 0) {
         return;
@@ -71,21 +72,30 @@ class TableView {
           }
           this.indices.push(idx);
       }
+      if (optionalColNames !== undefined) {
+          for (const colName of optionalColNames) {
+              const idx = this._columns.indexOf(colName);
+              this.indices.push(idx);
+          }
+      }
   }
 
   rows() {
     if (this.indices.length === 0) {
       return [];
     }
-    return this._rows.map((row : any) => this.indices.map((idx : number) => row[idx]));
+    return this._rows.map((row : any) => this.indices.map((idx : number) => idx >= 0 ? row[idx] : null));
   }
 }
 
 const MaxStops = 1000;
 
+const StopProperties = ['stop_lon', 'stop_lat'];
+const OptionalStopProperties = ['stop_id', 'stop_code', 'stop_name'];
+
 function getCenterFromResults(results: any) {
   const centroid = [0, 0];
-  const coords = new TableView(results, ['stop_lat', 'stop_lon']);
+  const coords = new TableView(results, StopProperties);
   let nCoords = 0;
   for (const latLng of coords.rows()) {
       centroid[0] += parseFloat(latLng[0]);
@@ -103,15 +113,15 @@ function getCenterFromResults(results: any) {
 }
 
 function addMarkersToMap(results: any, map: any) {
-  const coords = new TableView(results, ['stop_lon', 'stop_lat']).rows();
-  if (coords.length === 0) {
+  const stops = new TableView(results, StopProperties, OptionalStopProperties).rows();
+  if (stops.length === 0) {
     return;
   }
 
   let nCoords = 0;
-  for (const lonLat of coords) {
+  for (const stop of stops) {
     new maplibregl.Marker()
-        .setLngLat(lonLat)
+        .setLngLat([stop[0], stop[1]])
         .addTo(map);
     nCoords += 1;
     if (nCoords >= MaxStops) {
@@ -119,12 +129,11 @@ function addMarkersToMap(results: any, map: any) {
     }
   }
 
-  const bounds = coords.reduce((acc : any, coord : any) => {
-    return acc.extend(coord);
-  }, new maplibregl.LngLatBounds(coords[0], coords[0]));
+  const bounds = stops.reduce((acc : any, coord : any) => {
+    return acc.extend(coord.slice(0, 2));
+  }, new maplibregl.LngLatBounds(stops[0].slice(0, 2), stops[0].slice(0, 2)));
   map.fitBounds(bounds, {
      padding: 50,
      maxZoom: 15
   });
-
 }
