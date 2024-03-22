@@ -79,15 +79,6 @@ class TableView {
     }
     return this._rows.map((row : any) => this.indices.map((idx : number) => row[idx]));
   }
-
-  forEach(callback : Function) {
-      if (this.indices.length === 0) {
-          return;
-      }
-      for (const row of this._rows) {
-        callback(this.indices.map((idx : number) => row[idx]));
-      }
-  }
 }
 
 const MaxStops = 1000;
