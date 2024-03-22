@@ -5,7 +5,6 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: mintcream;
 }
 
 code {
@@ -21,12 +20,13 @@ h1 {
 }
 
 .data-selector {
-  width: 120ch;
+  width: 70%;
   margin: auto;
   padding: 18px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .data-selector input {

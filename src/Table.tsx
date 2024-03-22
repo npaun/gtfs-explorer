@@ -1,51 +1,26 @@
-import { VariableSizeGrid as Grid } from 'react-window';
-import AutoSizer from "react-virtualized-auto-sizer";
+import BaseTable from 'react-base-table';
+import AutoSizer from 'react-virtualized-auto-sizer'
+import 'react-base-table/styles.css'
 import './Table.css';
 
+const columns = ['a', 'bbbbbb', 'c', 'd', 'e', 'fasdfdsfadsjfl;', 'g', 'h', 'i', 'j'].map((col,i) => ({key: col, dataKey: col, title: col, width: 0, flexGrow: 1}));
 
-
-
-
-const Table = ({results}: {results: any}) => {
-  const Cell = ({columnIndex, rowIndex, style }: {columnIndex: number, rowIndex: number, style: any }) => (
-    <div style={style} className={rowIndex === 0 ? "header-cell" : "value-cell"}>
-      {results[rowIndex][columnIndex]}
-    </div>
-  );
-
-  const widthOf =  (columnIndex: number) => {
-    // FIXME: This construction makes no sense but our old CSV explorer used it
-    let maxWidth = 0;
-    for (let i = 0; i < results.length; i++) {
-      maxWidth = Math.max(maxWidth, results[i][columnIndex].length);
-    }
-
-
-    return 20*maxWidth + 10;
-  };
-
-
-  let totalWidth = 0;
-  for (let i = 0; i < results[0].length; i++) {
-    totalWidth += widthOf(i);
+const data2 = new Array(1000).fill(0).map((row, rowIndex) => {
+  return {
+    id: `row${rowIndex}`,
+    parentId: null,
+    ...Object.fromEntries(columns.map((col) => [col.dataKey, `Row ${rowIndex} - Col ${col.dataKey}`]))
   }
+});
 
+console.log(data2[0])
+
+const Table = (results: any) => {
   return (
-
     <div className="table">
-      <AutoSizer disableWidth>
-        {({ height }: { height: number }) => (
-          <Grid
-            columnCount={results[0].length}
-            columnWidth={index => widthOf(index)}
-            height={height}
-            rowCount={results.length}
-            rowHeight={index => 35}
-            width={totalWidth}
-            style={{"margin": "auto"}}
-          >
-            {Cell}
-          </Grid>
+      <AutoSizer>
+        {({ height, width }: { height: number, width: number }) => (
+          <BaseTable height={height} width={width} fixed={false} columns={columns} data={data2}/>   
         )}
       </AutoSizer>
     </div>
@@ -53,3 +28,4 @@ const Table = ({results}: {results: any}) => {
 }
 
 export default Table;
+
