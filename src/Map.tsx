@@ -57,7 +57,6 @@ class TableView {
   indices : any;
 
   constructor(results: any, colNames: any, optionalColNames?: any) {
-      console.log(optionalColNames);
       this.indices = [];
       if (!results || !('data' in results) || results.data.length === 0 || results.data[0].values.length === 0) {
         return;
