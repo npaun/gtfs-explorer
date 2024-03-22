@@ -8,6 +8,7 @@ import Table from "./Table";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMap, faTable } from '@fortawesome/free-solid-svg-icons';
 import { useDebounce } from "use-debounce";
+import { interceptMapData } from "./intercept-map-data";
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -26,7 +27,6 @@ function App() {
   useEffect(() => {
     if (!feedCode || !step) {
       setWorker(null);
-      console.log("worker was cleared");
       return;
     }
 
@@ -50,6 +50,11 @@ function App() {
         .catch((error) => setSqlResult({ error }));
     }
   }, [query, worker]);
+
+  useEffect(() => {
+    if (!sqlResult || 'error' in sqlResult) return;
+    interceptMapData(sqlResult.data[0].columns, sqlResult.data[0].values);
+  }, [sqlResult]);
   
   return (
     <div className="explorer">
