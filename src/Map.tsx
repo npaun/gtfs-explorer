@@ -10,12 +10,10 @@ export default function Map({ sqlResult }: {sqlResult:{error:unknown}|{data:[{co
   const [zoom] = useState(14);
 
   useEffect(() => {
-    addMarkersToMap(sqlResult, map.current, markers.current);
-
-    if (map.current) return; // stops map from intializing more than once
-
-    markers.current = []
-    createMap(map, mapContainer, zoom);
+    if (!map.current) { // stops map from intializing more than once
+      markers.current = []
+      createMap(map, mapContainer, zoom);
+    }
 
     addMarkersToMap(sqlResult, map.current, markers.current);
 
@@ -64,26 +62,26 @@ class TableView {
   indices : any;
 
   constructor(results: any, colNames: any, optionalColNames?: any) {
-      this.indices = [];
-      if (!results || !('data' in results) || results.data.length === 0 || results.data[0].values.length === 0) {
-        return;
+    this.indices = [];
+    if (!results || !('data' in results) || results.data.length === 0 || results.data[0].values.length === 0) {
+      return;
+    }
+    this._columns = results.data[0].columns;
+    this._rows = results.data[0].values;
+    for (const colName of colNames) {
+      const idx = this._columns.indexOf(colName);
+      if (idx < 0) {
+        this.indices = [];
+        break;
       }
-      this._columns = results.data[0].columns;
-      this._rows = results.data[0].values;
-      for (const colName of colNames) {
-          const idx = this._columns.indexOf(colName);
-          if (idx < 0) {
-              this.indices = [];
-              break;
-          }
-          this.indices.push(idx);
+      this.indices.push(idx);
+    }
+    if (optionalColNames !== undefined) {
+      for (const colName of optionalColNames) {
+        const idx = this._columns.indexOf(colName);
+        this.indices.push(idx);
       }
-      if (optionalColNames !== undefined) {
-          for (const colName of optionalColNames) {
-              const idx = this._columns.indexOf(colName);
-              this.indices.push(idx);
-          }
-      }
+    }
   }
 
   rows() {
@@ -132,7 +130,7 @@ function addMarkersToMap(results: any, map: maplibregl.Map|null, markers: Array<
     return acc.extend(coord.slice(0, 2));
   }, new maplibregl.LngLatBounds(stops[0].slice(0, 2), stops[0].slice(0, 2)));
   map.fitBounds(bounds, {
-     padding: 50,
-     maxZoom: 15
+    padding: 50,
+    maxZoom: 15
   });
 }
