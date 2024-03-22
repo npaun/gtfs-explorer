@@ -61,7 +61,6 @@ class TableView {
       if (!results || !('data' in results) || results.data.length === 0 || results.data[0].values.length === 0) {
         return;
       }
-      console.log(results);
       this._columns = results.data[0].columns;
       this._rows = results.data[0].values;
       for (const colName of colNames) {
@@ -91,15 +90,20 @@ class TableView {
   }
 }
 
+const MaxStops = 1000;
+
 function getCenterFromResults(results: any) {
   const centroid = [0, 0];
-  const stopCoords = new TableView(['stop_lat', 'stop_lon'], results);
+  const coords = new TableView(['stop_lat', 'stop_lon'], results);
   let nCoords = 0;
-  stopCoords.forEach((latLng : any) => {
+  for (const latLng of coords.rows()) {
       centroid[0] += parseFloat(latLng[0]);
       centroid[1] += parseFloat(latLng[1]);
       nCoords += 1;
-  });
+      if (nCoords >= MaxStops) {
+          break;
+      }
+  }
   if (nCoords > 0) {
       centroid[0] /= nCoords;
       centroid[1] /= nCoords;
@@ -113,10 +117,15 @@ function addMarkersToMap(results: any, map: any) {
     return;
   }
 
+  let nCoords = 0;
   for (const lonLat of coords) {
     new maplibregl.Marker()
         .setLngLat(lonLat)
         .addTo(map);
+    nCoords += 1;
+    if (nCoords >= MaxStops) {
+        break;
+    }
   }
 
   const bounds = coords.reduce((acc : any, coord : any) => {
