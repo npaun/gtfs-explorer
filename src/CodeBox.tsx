@@ -11,7 +11,6 @@ const CodeBox = (props: {sendQuery: /*React.Dispatch<React.SetStateAction<string
     return (
         <div className="code-box">
         <CodeMirror
-            value="select * from stops;"
             extensions={[sql()]}
             onChange={onChange}
         />
