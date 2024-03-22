@@ -8,6 +8,7 @@ import Table from "./Table";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMap, faTable } from '@fortawesome/free-solid-svg-icons';
 import { useDebounce } from "use-debounce";
+import SampleQueries from "./SampleQueries";
 import { interceptMapData } from "./intercept-map-data";
 
 function App() {
@@ -98,6 +99,7 @@ function App() {
         <CodeBox sendQuery={setQuery} query={searchParams.get('query')}/>
       </div>
       {view === 'table' ? <Table sqlResult={sqlResult} /> : <Map sqlResult={mapQuery} />}
+      <SampleQueries shouldDisplay={!query} setQuery={setQuery} />
     </div>
   );
 }
