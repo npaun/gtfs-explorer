@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMap, faTable } from '@fortawesome/free-solid-svg-icons';
 import { useDebounce } from "use-debounce";
 import SampleQueries from "./SampleQueries";
+import { interceptMapData } from "./intercept-map-data";
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,11 +24,11 @@ function App() {
   const [view, setView] = useState<'table'|'map'>('table');
   const [worker, setWorker] = useState<Awaited<ReturnType<typeof createWorker>>|null>(null);
   const [sqlResult, setSqlResult] = useState<{error:unknown}|{data:[{columns: string[]; values: unknown[][]}]}|null>(null);
+  const [mapQuery, setMapQuery] = useState<{error:unknown}|{data:[{columns: string[]; values: unknown[][]}]}|null>(null);
   
   useEffect(() => {
     if (!feedCode || !step) {
       setWorker(null);
-      console.log("worker was cleared");
       return;
     }
 
@@ -51,6 +52,25 @@ function App() {
         .catch((error) => setSqlResult({ error }));
     }
   }, [query, worker]);
+
+  useEffect(() => {
+    if (!worker || !sqlResult || 'error' in sqlResult) {
+      setMapQuery(null);
+      return;
+    }
+    const interceptedMapQuery = interceptMapData(sqlResult.data[0].columns, sqlResult.data[0].values);
+    if (!interceptedMapQuery) {
+      setMapQuery(sqlResult);
+    } else {
+      worker.db
+        // @ts-ignore-error the typings for this library are not great
+        .exec(interceptedMapQuery ?? query)
+        // @ts-ignore-error the typings for this library are not great
+        .then((data) => setMapQuery({ data }))
+        // @ts-ignore-error the typings for this library are not great
+        .catch((error) => setSqlResult({ error }));
+    }
+  }, [query, sqlResult, worker]);
   
   return (
     <div className="explorer">
@@ -78,7 +98,7 @@ function App() {
         </div>
         <CodeBox sendQuery={setQuery} query={searchParams.get('query')}/>
       </div>
-      {view === 'table' ? <Table sqlResult={sqlResult} /> : <Map sqlResult={sqlResult} />}
+      {view === 'table' ? <Table sqlResult={sqlResult} /> : <Map sqlResult={mapQuery} />}
       <SampleQueries shouldDisplay={!query} setQuery={setQuery} />
     </div>
   );
