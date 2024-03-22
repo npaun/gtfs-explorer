@@ -1,4 +1,5 @@
 import BaseTable from 'react-base-table';
+import AutoSizer from 'react-virtualized-auto-sizer'
 import 'react-base-table/styles.css'
 import './Table.css';
 
@@ -17,7 +18,11 @@ console.log(data2[0])
 const Table = (results: any) => {
   return (
     <div className="table">
-      <BaseTable height={700} width={700} fixed={false} columns={columns} data={data2}/>   
+      <AutoSizer>
+        {({ height, width }: { height: number, width: number }) => (
+          <BaseTable height={height} width={width} fixed={false} columns={columns} data={data2}/>   
+        )}
+      </AutoSizer>
     </div>
   );
 }
