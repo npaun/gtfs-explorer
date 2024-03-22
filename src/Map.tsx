@@ -56,7 +56,7 @@ class TableView {
   _rows : any;
   indices : any;
 
-  constructor(colNames : any, results : any) {
+  constructor(results : any, colNames : any) {
       this.indices = [];
       if (!results || !('data' in results) || results.data.length === 0 || results.data[0].values.length === 0) {
         return;
@@ -85,7 +85,7 @@ const MaxStops = 1000;
 
 function getCenterFromResults(results: any) {
   const centroid = [0, 0];
-  const coords = new TableView(['stop_lat', 'stop_lon'], results);
+  const coords = new TableView(results, ['stop_lat', 'stop_lon']);
   let nCoords = 0;
   for (const latLng of coords.rows()) {
       centroid[0] += parseFloat(latLng[0]);
@@ -103,7 +103,7 @@ function getCenterFromResults(results: any) {
 }
 
 function addMarkersToMap(results: any, map: any) {
-  const coords = new TableView(['stop_lon', 'stop_lat'], results).rows();
+  const coords = new TableView(results, ['stop_lon', 'stop_lat']).rows();
   if (coords.length === 0) {
     return;
   }
