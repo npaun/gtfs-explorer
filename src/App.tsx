@@ -6,6 +6,22 @@ import Map from "./Map";
 import Table from "./Table";
 
 function App() {
+  const fakeRows = [
+    ["1234", "Highway 6 / Slocan Park", "49.0000", "-117.1234"],
+    ["1235", "Nelson: Ward / Baker", "49.5555", "-117.3333"],
+    ["1236", "KBR Hospital", "49.001", "-117.000"],
+    ["1237", "Castlegar: Selkirk College", "49.00067", "-117.002020"]
+  ];
+  const fakeData = [
+    ["stop_id", "stop_name", "stop_lat", "stop_lon"],
+    ...fakeRows,
+    ...fakeRows,
+    ...fakeRows,
+    ...fakeRows,
+    ...fakeRows,
+    ...fakeRows
+  ];
+
   const [view, setView] = useState<'table'|'map'>('table');
   const [feedCode, setFeedCode] = useState('STM');
   const [step, setStep] = useState('PRE');
@@ -42,28 +58,30 @@ function App() {
   }, [query, worker]);
   
   return (
-    <div className="gtfs explorer">
+    <div className="explorer">
       <div className="header">
-        <h1>GTFS Explorer</h1>
-      </div>
-      <div className="data-selector">
-        <div>
-          <label>
-            feed code:
-            <input value={feedCode} onChange={e => setFeedCode(e.target.value)} />
-          </label>
-          <label>
-            step:
-            <input value={step} onChange={e => setStep(e.target.value)} />
-          </label>
-          <label>
-            view:
-            <button onClick={() => setView(view === 'table' ? 'map' : 'table')}>{view}</button>
-          </label>
+        <div className="title">
+          <h1>GTFS Explorer</h1>
         </div>
+        <div className="data-selector">
+              <div>
+                <label htmlFor="feed">feed code:</label>
+                <input id="feed" value={feedCode} onChange={e => setFeedCode(e.target.value)} />
+              </div>
+
+              <div>
+                <label htmlFor="step">step:</label>
+                <input id="step" value={step} onChange={e => setStep(e.target.value)} />
+              </div>
+              
+              <div>
+              <label htmlFor="view">view:</label>
+              <button id="view" onClick={() => setView(view === 'table' ? 'map' : 'table')}>{view}</button>
+              </div>
+        </div>
+        <CodeBox sendQuery={setQuery}/>
       </div>
-      <CodeBox sendQuery={setQuery}/>
-      {view === 'table' ? <Table /> : <Map />}
+      {view === 'table' ? <Table results={fakeData} /> : <Map />}
     </div>
   );
 }

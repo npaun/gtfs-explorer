@@ -1,8 +1,5 @@
 .map-wrap {
-  position: absolute;
-  width: 75%;
-  height: 100%;
-  right: 0;
+  height: 70vh;
 }
 
 .map {
