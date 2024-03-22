@@ -8,6 +8,7 @@ import Table from "./Table";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMap, faTable } from '@fortawesome/free-solid-svg-icons';
 import { useDebounce } from "use-debounce";
+import SampleQueries from "./SampleQueries";
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -78,6 +79,7 @@ function App() {
         <CodeBox sendQuery={setQuery} query={searchParams.get('query')}/>
       </div>
       {view === 'table' ? <Table sqlResult={sqlResult} /> : <Map sqlResult={sqlResult} />}
+      <SampleQueries shouldDisplay={!query} setQuery={setQuery} />
     </div>
   );
 }
