@@ -3,7 +3,7 @@ import { sql } from "@codemirror/lang-sql";
 import { useCallback } from "react";
 import './CodeBox.css';
 
-const CodeBox = (props: {sendQuery: React.Dispatch<React.SetStateAction<string>>}) => {
+const CodeBox = (props: {sendQuery: /*React.Dispatch<React.SetStateAction<string>>*/ (query: string) => void}) => {
     const onChange = useCallback(async (value: string) => {
         props.sendQuery(value);
     }, [props]);
