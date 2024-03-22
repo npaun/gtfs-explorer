@@ -36,7 +36,6 @@ function App() {
   }, [feedCode, step]);
 
   useEffect(() => {
-    console.log('query effect');
     if (query && query.endsWith(";")) {
       if (!worker) {
         setSqlResult({ error: "Not connected to the database" });
@@ -76,7 +75,7 @@ function App() {
               <FontAwesomeIcon className="view-icons view-table" data-selected={view === "map"} icon={faMap} onClick={() => setView('map')} />
               </div>
         </div>
-        <CodeBox sendQuery={setQuery}/>
+        <CodeBox sendQuery={setQuery} query={searchParams.get('query')}/>
       </div>
       {view === 'table' ? <Table sqlResult={sqlResult} /> : <Map sqlResult={sqlResult} />}
     </div>

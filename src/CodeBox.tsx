@@ -3,7 +3,7 @@ import { sql } from "@codemirror/lang-sql";
 import { useCallback } from "react";
 import './CodeBox.css';
 
-const CodeBox = (props: {sendQuery: /*React.Dispatch<React.SetStateAction<string>>*/ (query: string) => void}) => {
+const CodeBox = (props: {sendQuery: /*React.Dispatch<React.SetStateAction<string>>*/ (query: string) => void; query: string|null}) => {
     const onChange = useCallback(async (value: string) => {
         props.sendQuery(value);
     }, [props]);
@@ -11,6 +11,7 @@ const CodeBox = (props: {sendQuery: /*React.Dispatch<React.SetStateAction<string
     return (
         <div className="code-box">
         <CodeMirror
+            value={props.query ?? ''}
             extensions={[sql()]}
             onChange={onChange}
         />
