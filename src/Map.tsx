@@ -3,11 +3,10 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './Map.css';
 
-export default function Map() {
+export default function Map({ sqlResult }: {sqlResult:{error:unknown}|{data:[{columns: string[]; values: unknown[][]}]} |null}) {
   const mapContainer = useRef<HTMLDivElement|null>(null);
   const map = useRef<maplibregl.Map|null>(null);
-  const [lng] = useState(139.753);
-  const [lat] = useState(35.6844);
+  const [lat, lng] = getCenterFromResults(sqlResult);
   const [zoom] = useState(14);
 
   useEffect(() => {
@@ -41,6 +40,8 @@ export default function Map() {
       center: [lng, lat],
       zoom: zoom
     });
+
+    addMarkersToMap(sqlResult, map.current);
   }, [lng, lat, zoom]);
 
   return (
@@ -48,4 +49,82 @@ export default function Map() {
       <div ref={mapContainer} className="map" />
     </div>
   );
+}
+
+class TableView {
+  _columns : any;
+  _rows : any;
+  indices : any;
+
+  constructor(colNames : any, results : any) {
+      this.indices = [];
+      if (!results || !('data' in results) || results.data.length === 0 || results.data[0].values.length === 0) {
+        return;
+      }
+      console.log(results);
+      this._columns = results.data[0].columns;
+      this._rows = results.data[0].values;
+      for (const colName of colNames) {
+          const idx = this._columns.indexOf(colName);
+          if (idx < 0) {
+              this.indices = [];
+              break;
+          }
+          this.indices.push(idx);
+      }
+  }
+
+  rows() {
+    if (this.indices.length === 0) {
+      return [];
+    }
+    return this._rows.map((row : any) => this.indices.map((idx : number) => row[idx]));
+  }
+
+  forEach(callback : Function) {
+      if (this.indices.length === 0) {
+          return;
+      }
+      for (const row of this._rows) {
+        callback(this.indices.map((idx : number) => row[idx]));
+      }
+  }
+}
+
+function getCenterFromResults(results: any) {
+  const centroid = [0, 0];
+  const stopCoords = new TableView(['stop_lat', 'stop_lon'], results);
+  let nCoords = 0;
+  stopCoords.forEach((latLng : any) => {
+      centroid[0] += parseFloat(latLng[0]);
+      centroid[1] += parseFloat(latLng[1]);
+      nCoords += 1;
+  });
+  if (nCoords > 0) {
+      centroid[0] /= nCoords;
+      centroid[1] /= nCoords;
+  }
+  return centroid;
+}
+
+function addMarkersToMap(results: any, map: any) {
+  const coords = new TableView(['stop_lon', 'stop_lat'], results).rows();
+  if (coords.length === 0) {
+    return;
+  }
+
+  for (const lonLat of coords) {
+    new maplibregl.Marker()
+        .setLngLat(lonLat)
+        .addTo(map);
+  }
+
+  const bounds = coords.reduce((acc : any, coord : any) => {
+    return acc.extend(coord);
+  }, new maplibregl.LngLatBounds(coords[0], coords[0]));
+  map.fitBounds(bounds, {
+     padding: 50,
+     maxZoom: 15
+  });
+
 }
