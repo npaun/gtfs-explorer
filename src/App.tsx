@@ -13,7 +13,7 @@ function App() {
   const [step, setStep] = useState('PRE');
   const [worker, setWorker] = useState<Awaited<ReturnType<typeof createWorker>>|null>(null);
   const [query, setQuery] = useState('');
-  const [data, setSqlResult] = useState<{error:string}|{data:unknown}|null>(null);
+  const [sqlResult, setSqlResult] = useState<{error:unknown}|{data:[{columns: string[]; values: unknown[][]}]}|null>(null);
   
   useEffect(() => {
     if (!feedCode || !step) {
@@ -70,7 +70,7 @@ function App() {
         </div>
         <CodeBox sendQuery={setQuery}/>
       </div>
-      {view === 'table' ? <Table  /> : <Map />}
+      {view === 'table' ? <Table sqlResult={sqlResult} /> : <Map />}
     </div>
   );
 }
