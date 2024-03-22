@@ -1,6 +1,5 @@
 .table {
-  position: absolute;
-  width: 75%;
-  height: 100%;
-  right: 0;
+width: 97%;
+margin: auto;
+min-height: 80vh;
 }

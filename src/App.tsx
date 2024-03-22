@@ -4,6 +4,8 @@ import CodeBox from './CodeBox';
 import { createWorker } from "./db";
 import Map from "./Map";
 import Table from "./Table";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMap, faTable } from '@fortawesome/free-solid-svg-icons';
 
 function App() {
   const [view, setView] = useState<'table'|'map'>('table');
@@ -26,6 +28,7 @@ function App() {
   }, [feedCode, step]);
 
   useEffect(() => {
+    console.log('query effect');
     if (query && query.endsWith(";")) {
       if (!worker) {
         setSqlResult({ error: "Not connected to the database" });
@@ -42,28 +45,32 @@ function App() {
   }, [query, worker]);
   
   return (
-    <div className="gtfs explorer">
+    <div className="explorer">
       <div className="header">
-        <h1>GTFS Explorer</h1>
-      </div>
-      <div className="data-selector">
-        <div>
-          <label>
-            feed code:
-            <input value={feedCode} onChange={e => setFeedCode(e.target.value)} />
-          </label>
-          <label>
-            step:
-            <input value={step} onChange={e => setStep(e.target.value)} />
-          </label>
-          <label>
-            view:
-            <button onClick={() => setView(view === 'table' ? 'map' : 'table')}>{view}</button>
-          </label>
+        <div className="data-selector">
+        <div className="title">
+          <h1>GTFS Explorer</h1>
         </div>
+
+              <div>
+                <label htmlFor="feed">feed code</label>
+                <input id="feed" width={12} value={feedCode} onChange={e => setFeedCode(e.target.value)} />
+              </div>
+
+              <div>
+                <label htmlFor="step">step</label>
+                <input id="step" width={3} value={step} onChange={e => setStep(e.target.value)} />
+              </div>
+              
+              <div>
+              <label htmlFor="view">view</label>
+              <FontAwesomeIcon className="view-icons view-table" data-selected={view === "table"} icon={faTable}  onClick={() => setView('table')} />
+              <FontAwesomeIcon className="view-icons view-table" data-selected={view === "map"} icon={faMap} onClick={() => setView('map')} />
+              </div>
+        </div>
+        <CodeBox sendQuery={setQuery}/>
       </div>
-      <CodeBox sendQuery={setQuery}/>
-      {view === 'table' ? <Table /> : <Map />}
+      {view === 'table' ? <Table  /> : <Map />}
     </div>
   );
 }

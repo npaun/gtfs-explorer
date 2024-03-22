@@ -1,6 +1,4 @@
 .code-box {
-  position: absolute;
-  left: 0;
-  width: 25%;
-  height: 100%;
+  width: 80ch;
+  margin: auto;
 }
