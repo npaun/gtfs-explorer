@@ -7,16 +7,17 @@ import Map from "./Map";
 import Table from "./Table";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMap, faTable } from '@fortawesome/free-solid-svg-icons';
+import { useDebounce } from "use-debounce";
 
 function App() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const feedCode = searchParams.get('feedCode');
-  const step = searchParams.get('step');
-  const query = searchParams.get('query');
 
   const setFeedCode = (feedCode: string) => setSearchParams((prev) => new URLSearchParams({ ...Object.fromEntries(prev.entries()), ...{ feedCode } }));
   const setStep = (step: string) => setSearchParams((prev) => new URLSearchParams({ ...Object.fromEntries(prev.entries()), ...{ step } }));
   const setQuery = (query: string) => setSearchParams((prev) => new URLSearchParams({ ...Object.fromEntries(prev.entries()), ...{ query } }));
+  const [feedCode] = useDebounce(searchParams.get('feedCode'), 500);
+  const [step] = useDebounce(searchParams.get('step'), 500);
+  const [query] = useDebounce(searchParams.get('query'), 500);
 
   const [view, setView] = useState<'table'|'map'>('table');
   const [worker, setWorker] = useState<Awaited<ReturnType<typeof createWorker>>|null>(null);
@@ -61,12 +62,12 @@ function App() {
 
               <div>
                 <label htmlFor="feed">feed code</label>
-                <input id="feed" width={12} value={feedCode ?? ''} onChange={e => setFeedCode(e.target.value)} />
+                <input id="feed" width={12} value={searchParams.get('feedCode') ?? ''} onChange={e => setFeedCode(e.target.value)} />
               </div>
 
               <div>
                 <label htmlFor="step">step</label>
-                <input id="step" width={3} value={step ?? ''} onChange={e => setStep(e.target.value)} />
+                <input id="step" width={3} value={searchParams.get('step') ?? ''} onChange={e => setStep(e.target.value)} />
               </div>
               
               <div>
