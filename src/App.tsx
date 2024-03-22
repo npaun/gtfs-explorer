@@ -70,7 +70,7 @@ function App() {
         </div>
         <CodeBox sendQuery={setQuery}/>
       </div>
-      {view === 'table' ? <Table results={fakeData} /> : <Map />}
+      {view === 'table' ? <Table  /> : <Map />}
     </div>
   );
 }
