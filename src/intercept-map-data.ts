@@ -16,7 +16,7 @@ function interceptMapData(cols: string[], values: unknown[][]) {
       continue;
     }
     const ids = values.map(row => String(row[idFieldIdx]));
-    const query = queryBuilder(ids);
+    const query = queryBuilder(Array.from(new Set(ids)));
     console.log(query);
   }
 }
