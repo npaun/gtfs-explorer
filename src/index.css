@@ -14,34 +14,48 @@ code {
 }
 
 
-.title {
-  width: 80%;
-  margin: auto;
-  font-size: 32px;
-}
-
 h1 {
   padding: 0;
   margin: 0;
+  font-weight: normal
 }
 
 .data-selector {
-  width: 80%;
+  width: 120ch;
   margin: auto;
-  padding: 48px 0;
+  padding: 18px 0;
   display: flex;
   justify-content: space-between;
-  font-size: 20px;
+  align-items: center;
 }
 
 .data-selector input {
   padding: 10px;
+  display: inline-block;
 }
 
 .data-selector label {
   padding: 10px;
+  text-transform: uppercase;
+}
+
+.data-selector .title {
+  text-transform: uppercase;
+}
+
+.view-icons {
+  padding: 0 5px;
+}
+
+.view-icons[data-selected=false] {
+  color: #888;
 }
 
 .header {
   background-color: #b9ffb9;
+  min-height: 20vh;
+}
+
+.code-box {
+  padding-bottom: 18px;
 }
