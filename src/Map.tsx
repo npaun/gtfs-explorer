@@ -92,10 +92,59 @@ class TableView {
   }
 }
 
-const MaxStops = 1000;
 
-const StopProperties = ['stop_lon', 'stop_lat'];
-const OptionalStopProperties = ['stop_id', 'stop_code', 'stop_name'];
+class Stop {
+  lat: number;
+  lon: number;
+  id: string|null;
+  code: string|null;
+  name: string|null;
+
+  constructor(arr: Array<string>) {
+    this.lat = parseFloat(arr[0]);
+    this.lon = parseFloat(arr[1]);
+    this.id = arr.length >= 3 ? arr[2] : null;
+    this.code = arr.length >= 4 ? arr[3] : null;
+    this.name = arr.length >= 5 ? arr[4] : null;
+  }
+
+  toHTMLTooltip(): string|null {
+    if (this.id === null && this.code === null && this.name === null) {
+      return null;
+    }
+
+    let tooltip = ''
+    if (this.code !== null && this.code !== '') {
+      tooltip += this.code + ' ';
+    }
+
+    if (this.name !== null) {
+      tooltip += this.name;
+    }
+
+    if (tooltip.length > 0) {
+      tooltip = `<b>${tooltip}</b>`;
+    }
+
+    if (this.id !== null && this.id !== '') {
+      if (tooltip.length > 0) {
+        tooltip += '<br/>';
+      }
+      tooltip += `stop_id: ${this.id}`;
+    }
+
+    return tooltip;
+  }
+
+  static readonly PROPERTIES: Array<string> = ['stop_lat', 'stop_lon'];
+  static readonly OPTIONAL_PROPERTIES: Array<string> = ['stop_id', 'stop_code', 'stop_name'];
+
+  static view(results: any): Array<Stop> {
+    return new TableView(results, Stop.PROPERTIES, Stop.OPTIONAL_PROPERTIES).rows().map((x: Array<string>) => new Stop(x));
+  }
+}
+
+const MaxStops = 1000;
 
 function addMarkersToMap(results: any, map: maplibregl.Map|null, markers: Array<maplibregl.Marker>|null) {
   if (map === null || markers === null) {
@@ -109,16 +158,16 @@ function addMarkersToMap(results: any, map: maplibregl.Map|null, markers: Array<
     }
   }
 
-  const stops = new TableView(results, StopProperties, OptionalStopProperties).rows();
+  const stops = Stop.view(results);
   if (stops.length === 0) {
     return;
   }
 
+  const bounds = new maplibregl.LngLatBounds();
   let nCoords = 0;
   for (const stop of stops) {
-    const marker = new maplibregl.Marker()
-        .setLngLat([stop[0], stop[1]])
-        .addTo(map);
+    bounds.extend([stop.lon, stop.lat]);
+    const marker = getMarker(stop, map);
     markers.push(marker);
     nCoords += 1;
     if (nCoords >= MaxStops) {
@@ -126,11 +175,30 @@ function addMarkersToMap(results: any, map: maplibregl.Map|null, markers: Array<
     }
   }
 
-  const bounds = stops.reduce((acc : any, coord : any) => {
-    return acc.extend(coord.slice(0, 2));
-  }, new maplibregl.LngLatBounds(stops[0].slice(0, 2), stops[0].slice(0, 2)));
   map.fitBounds(bounds, {
     padding: 50,
     maxZoom: 15
   });
+}
+
+function getMarker(stop: Stop, map: maplibregl.Map) {
+  const marker = new maplibregl.Marker()
+    .setLngLat([stop.lon, stop.lat])
+    .addTo(map);
+
+  const tooltipHTML = stop.toHTMLTooltip();
+  if (tooltipHTML !== null) {
+    const tooltip = new maplibregl.Popup({ offset: 25 }) // Adjust offset as needed
+      .setHTML(tooltipHTML);
+
+    marker.getElement().addEventListener('mouseenter', () => {
+      tooltip.setLngLat(marker.getLngLat()).addTo(map);
+    });
+
+    marker.getElement().addEventListener('mouseleave', () => {
+      tooltip.remove();
+    });
+  }
+
+  return marker;
 }
