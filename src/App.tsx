@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from 'react-router-dom';
 import './App.css';
 import CodeBox from './CodeBox';
 import { createWorker } from "./db";
@@ -8,11 +9,17 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMap, faTable } from '@fortawesome/free-solid-svg-icons';
 
 function App() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const feedCode = searchParams.get('feedCode');
+  const step = searchParams.get('step');
+  const query = searchParams.get('query');
+
+  const setFeedCode = (feedCode: string) => setSearchParams((prev) => new URLSearchParams({ ...Object.fromEntries(prev.entries()), ...{ feedCode } }));
+  const setStep = (step: string) => setSearchParams((prev) => new URLSearchParams({ ...Object.fromEntries(prev.entries()), ...{ step } }));
+  const setQuery = (query: string) => setSearchParams((prev) => new URLSearchParams({ ...Object.fromEntries(prev.entries()), ...{ query } }));
+
   const [view, setView] = useState<'table'|'map'>('table');
-  const [feedCode, setFeedCode] = useState('STM');
-  const [step, setStep] = useState('PRE');
   const [worker, setWorker] = useState<Awaited<ReturnType<typeof createWorker>>|null>(null);
-  const [query, setQuery] = useState('');
   const [sqlResult, setSqlResult] = useState<{error:unknown}|{data:[{columns: string[]; values: unknown[][]}]}|null>(null);
   
   useEffect(() => {
@@ -54,12 +61,12 @@ function App() {
 
               <div>
                 <label htmlFor="feed">feed code</label>
-                <input id="feed" width={12} value={feedCode} onChange={e => setFeedCode(e.target.value)} />
+                <input id="feed" width={12} value={feedCode ?? ''} onChange={e => setFeedCode(e.target.value)} />
               </div>
 
               <div>
                 <label htmlFor="step">step</label>
-                <input id="step" width={3} value={step} onChange={e => setStep(e.target.value)} />
+                <input id="step" width={3} value={step ?? ''} onChange={e => setStep(e.target.value)} />
               </div>
               
               <div>
