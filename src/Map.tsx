@@ -15,8 +15,9 @@ export default function Map({ sqlResult }: {sqlResult:{error:unknown}|{data:[{co
       createMap(map, mapContainer, zoom);
     }
 
-    addMarkersToMap(sqlResult, map.current, markers.current);
-    addShapesToMap(sqlResult, map.current);
+    const bounds = addMarkersToMap(sqlResult, map.current, markers.current);
+    addShapesToMap(sqlResult, map.current, bounds);
+    setBounds(map.current, bounds);
 
   }, [zoom, sqlResult]);
 
@@ -173,6 +174,15 @@ class Shape {
     }
   }
 
+  toFeature() : any {
+    return {
+      'type': 'Feature',
+      'geometry': {
+        'type': 'LineString',
+        'coordinates': [this.points.map((p: Point) => [p.lon, p.lat])],
+      }
+    };
+  }
   static compareSequence(a: Array<any>, b: Array<any>) {
     return a[3] - b[3];
   }
@@ -228,42 +238,40 @@ class Shape {
 
 const MaxStops = 1000;
 
-function addShapesToMap(results: any, map: maplibregl.Map|null) {
+function setBounds(map: any, bounds: any) {
+  if (!bounds.isEmpty()) {
+    map.fitBounds(bounds, {
+      padding: 50,
+      maxZoom: 15
+    });
+  }
+}
+
+function addShapesToMap(results: any, map: maplibregl.Map|null, bounds: any) {
   if (map === null) {
     return;
   }
 
   let nShapes = 0;
+  let features = [];
+
   for (const shape of Shape.view(results)) {
     nShapes++;
     if (nShapes === MaxStops) {
       break;
     }
-    console.log(shape);
-/*    map.addLayer({
-        id: shape.id,
-        type: 'line',
-        source: {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: shape.points.map((pt: Point) => [pt.lon, pt.lat])
-            }
-          }
-        },
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#ff0000', // Line color
-          'line-width': 2 // Line width in pixels
-        }
-    });*/
+    for (const point of shape.points) {
+      bounds.extend([point.lon, point.lat]);
+    }
+    features.push(shape.toFeature());
   }
+
+  const geojson = {
+    'type': 'FeatureCollection',
+    'features': features
+  };
+
+  console.log(features);
 }
 
 
@@ -299,14 +307,7 @@ function addMarkersToMap(results: any, map: maplibregl.Map|null, markers: Array<
     }
   }
 
-  if (nCoords === 0) {
-    return;
-  }
-
-  map.fitBounds(bounds, {
-    padding: 50,
-    maxZoom: 15
-  });
+  return bounds;
 }
 
 function getMarker(stop: Stop, map: maplibregl.Map) {
