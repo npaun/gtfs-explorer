@@ -15,7 +15,7 @@ export default function Map({ sqlResult }: {sqlResult:{error:unknown}|{data:[{co
     if (map.current) return; // stops map from intializing more than once
 
     markers.current = []
-    createMap(map, zoom);
+    createMap(map, mapContainer, zoom);
 
     addMarkersToMap(sqlResult, map.current, markers.current);
 
@@ -28,9 +28,8 @@ export default function Map({ sqlResult }: {sqlResult:{error:unknown}|{data:[{co
   );
 }
 
-function createMap(map :any, zoom: number) {
+function createMap(map :any, mapContainer: any, zoom: number) {
   map.current = new maplibregl.Map({
-    // @ts-expect-error idk
     container: mapContainer.current,
     style: {
       version: 8,
