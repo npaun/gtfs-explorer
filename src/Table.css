@@ -1,5 +1,29 @@
 .table {
+min-height: 80vh;
 width: 97%;
 margin: auto;
-min-height: 80vh;
+}
+
+table {
+  width: 100%;
+  font-family: monospace;
+}
+
+.table-header {
+  background: #fdf6e3;
+}
+
+.sizer {
+  visibility: hidden;
+}
+
+
+th {
+  text-align: left;
+  font-weight: normal;
+}
+
+th, td {
+  padding: 10px;
+  border: 0.5px solid #ddd;
 }
