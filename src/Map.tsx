@@ -6,49 +6,57 @@ import './Map.css';
 export default function Map({ sqlResult }: {sqlResult:{error:unknown}|{data:[{columns: string[]; values: unknown[][]}]} |null}) {
   const mapContainer = useRef<HTMLDivElement|null>(null);
   const map = useRef<maplibregl.Map|null>(null);
-  const [lat, lng] = getCenterFromResults(sqlResult);
+  const markers = useRef<Array<maplibregl.Marker>|null>(null);
   const [zoom] = useState(14);
 
   useEffect(() => {
-    if (map.current) return; // stops map from intializing more than once
-  
-    map.current = new maplibregl.Map({
-      // @ts-expect-error idk
-      container: mapContainer.current,
-      style: {
-        version: 8,
-        sources: {
-          'raster-tiles': {
-            'type': 'raster',
-            'tiles': [
-                'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-            ],
-            'tileSize': 256,
-            'attribution':  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          }
-        },
-        layers: [
-          {
-            id: 'simple-tiles',
-            type: 'raster',
-            source: 'raster-tiles',
-            minzoom: 0,
-            maxzoom: 22
-          }
-        ]
-      },
-      center: [lng, lat],
-      zoom: zoom
-    });
+    addMarkersToMap(sqlResult, map.current, markers.current);
 
-    addMarkersToMap(sqlResult, map.current);
-  }, [lng, lat, zoom, sqlResult]);
+    if (map.current) return; // stops map from intializing more than once
+
+    markers.current = []
+    createMap(map, zoom);
+
+    addMarkersToMap(sqlResult, map.current, markers.current);
+
+  }, [zoom, sqlResult]);
 
   return (
     <div className="map-wrap">
       <div ref={mapContainer} className="map" />
     </div>
   );
+}
+
+function createMap(map :any, zoom: number) {
+  map.current = new maplibregl.Map({
+    // @ts-expect-error idk
+    container: mapContainer.current,
+    style: {
+      version: 8,
+      sources: {
+        'raster-tiles': {
+          'type': 'raster',
+          'tiles': [
+              'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+          ],
+          'tileSize': 256,
+          'attribution':  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }
+      },
+      layers: [
+        {
+          id: 'simple-tiles',
+          type: 'raster',
+          source: 'raster-tiles',
+          minzoom: 0,
+          maxzoom: 22
+        }
+      ]
+    },
+    center: [0, 0],
+    zoom: zoom
+  });
 }
 
 class TableView {
@@ -92,26 +100,18 @@ const MaxStops = 1000;
 const StopProperties = ['stop_lon', 'stop_lat'];
 const OptionalStopProperties = ['stop_id', 'stop_code', 'stop_name'];
 
-function getCenterFromResults(results: any) {
-  const centroid = [0, 0];
-  const coords = new TableView(results, StopProperties);
-  let nCoords = 0;
-  for (const latLng of coords.rows()) {
-      centroid[0] += parseFloat(latLng[0]);
-      centroid[1] += parseFloat(latLng[1]);
-      nCoords += 1;
-      if (nCoords >= MaxStops) {
-          break;
-      }
+function addMarkersToMap(results: any, map: maplibregl.Map|null, markers: Array<maplibregl.Marker>|null) {
+  if (map === null || markers === null) {
+    return;
   }
-  if (nCoords > 0) {
-      centroid[0] /= nCoords;
-      centroid[1] /= nCoords;
-  }
-  return centroid;
-}
 
-function addMarkersToMap(results: any, map: any) {
+  while (markers.length > 0) {
+    const marker = markers.pop();
+    if (marker) {
+      marker.remove();
+    }
+  }
+
   const stops = new TableView(results, StopProperties, OptionalStopProperties).rows();
   if (stops.length === 0) {
     return;
@@ -119,9 +119,10 @@ function addMarkersToMap(results: any, map: any) {
 
   let nCoords = 0;
   for (const stop of stops) {
-    new maplibregl.Marker()
+    const marker = new maplibregl.Marker()
         .setLngLat([stop[0], stop[1]])
         .addTo(map);
+    markers.push(marker);
     nCoords += 1;
     if (nCoords >= MaxStops) {
         break;
