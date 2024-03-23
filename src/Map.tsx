@@ -176,13 +176,17 @@ class Shape {
 
   toFeature() : any {
     return {
-      'type': 'Feature',
-      'geometry': {
-        'type': 'LineString',
-        'coordinates': [this.points.map((p: Point) => [p.lon, p.lat])],
+      type: 'Feature',
+      properties: {
+          name: this.id,
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: this.points.map((p: Point) => [p.lon, p.lat]),
       }
-    };
+    }
   }
+
   static compareSequence(a: Array<any>, b: Array<any>) {
     return a[3] - b[3];
   }
@@ -247,13 +251,37 @@ function setBounds(map: any, bounds: any) {
   }
 }
 
+const tooltips : Array<maplibregl.Popup> = [];
+
+function displayTooltip(e: any, map: maplibregl.Map) {
+  const features = map.queryRenderedFeatures(e.point, { layers: ['gtfs-shapes-layer'] });
+
+  while (true) {
+    const tooltip: maplibregl.Popup|undefined = tooltips.pop();
+    if (tooltip) {
+      tooltip.remove();
+    }
+    else {
+      break;
+    }
+  }
+
+  for (const feature of features) {
+    const tooltip = new maplibregl.Popup()
+      .setLngLat(e.lngLat)
+      .setHTML('<b>' + feature.properties.name + '</b>')
+      .addTo(map);
+    tooltips.push(tooltip);
+  }
+}
+
 function addShapesToMap(results: any, map: maplibregl.Map|null, bounds: any) {
   if (map === null) {
     return;
   }
 
   let nShapes = 0;
-  let features = [];
+  let features: any = [];
 
   for (const shape of Shape.view(results)) {
     nShapes++;
@@ -266,10 +294,35 @@ function addShapesToMap(results: any, map: maplibregl.Map|null, bounds: any) {
     features.push(shape.toFeature());
   }
 
-  const geojson = {
-    'type': 'FeatureCollection',
-    'features': features
-  };
+  map.on('mousemove', (e) => {
+    displayTooltip(e, map);
+  });
+
+  map.on('load', function() {
+    map.addSource('gtfs-shapes', {
+      type: 'geojson' as const,
+      data: {
+          type: 'FeatureCollection',
+          features: features
+      }
+    });
+
+    map.addLayer({
+      id: 'gtfs-shapes-layer',
+      type: 'line' as const,
+      source: 'gtfs-shapes',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
+      paint: {
+        'line-color': '#ff0000',
+        'line-width': 2,
+      }
+    });
+
+    console.log('okey');
+  });
 
   // TODO: display this geojson on the map
 }
