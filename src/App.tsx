@@ -54,7 +54,7 @@ function App() {
   }, [query, worker]);
 
   useEffect(() => {
-    if (!worker || !sqlResult || 'error' in sqlResult) {
+    if (!worker || !sqlResult || 'error' in sqlResult || !sqlResult.data || !sqlResult.data[0]) {
       setMapQuery(null);
       return;
     }
