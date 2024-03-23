@@ -15,6 +15,7 @@ export default function Map({ sqlResult }: {sqlResult:{error:unknown}|{data:[{co
       createMap(map, mapContainer, zoom);
     }
 
+    resetMap(map.current, markers.current)
     const bounds = addMarkersToMap(sqlResult, map.current, markers.current);
     addShapesToMap(sqlResult, map.current, bounds);
     setBounds(map.current, bounds);
@@ -255,8 +256,6 @@ function setBounds(map: any, bounds: any) {
 const tooltips : Array<maplibregl.Popup> = [];
 
 function displayTooltip(e: any, map: maplibregl.Map) {
-  const features = map.queryRenderedFeatures(e.point, { layers: ['gtfs-shapes-layer'] });
-
   while (true) {
     const tooltip: maplibregl.Popup|undefined = tooltips.pop();
     if (tooltip) {
@@ -267,6 +266,12 @@ function displayTooltip(e: any, map: maplibregl.Map) {
     }
   }
 
+  if (map.getLayer('gtfs-shapes-layer') === undefined) {
+    return;
+  }
+
+  const features = map.queryRenderedFeatures(e.point, { layers: ['gtfs-shapes-layer'] });
+
   for (const feature of features) {
     const tooltip = new maplibregl.Popup()
       .setLngLat(e.lngLat)
@@ -275,6 +280,36 @@ function displayTooltip(e: any, map: maplibregl.Map) {
     tooltips.push(tooltip);
   }
 }
+
+function handleMapLoad(map: maplibregl.Map, features: any) {
+  if (features.length === 0) {
+    return;
+  }
+
+  map.addSource('gtfs-shapes', {
+    type: 'geojson' as const,
+    data: {
+        type: 'FeatureCollection',
+        features: features
+    }
+  });
+
+  map.addLayer({
+    id: 'gtfs-shapes-layer',
+    type: 'line' as const,
+    source: 'gtfs-shapes',
+    layout: {
+      'line-join': 'round',
+      'line-cap': 'round',
+    },
+    paint: {
+      'line-color': '#ff0000',
+      'line-width': 2,
+    }
+  });
+}
+
+const mapLoadHandlers: any = [];
 
 function addShapesToMap(results: any, map: maplibregl.Map|null, bounds: any) {
   if (map === null) {
@@ -299,44 +334,48 @@ function addShapesToMap(results: any, map: maplibregl.Map|null, bounds: any) {
     displayTooltip(e, map);
   });
 
-  map.on('load', function() {
-    map.addSource('gtfs-shapes', {
-      type: 'geojson' as const,
-      data: {
-          type: 'FeatureCollection',
-          features: features
-      }
-    });
-
-    map.addLayer({
-      id: 'gtfs-shapes-layer',
-      type: 'line' as const,
-      source: 'gtfs-shapes',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': '#ff0000',
-        'line-width': 2,
-      }
-    });
-  });
-
-  // TODO: display this geojson on the map
+  if (map.loaded()) {
+    handleMapLoad(map, features);
+  }
+  else {
+    const handler = function() {
+      handleMapLoad(map, features);
+    };
+    map.on('load', handler);
+    mapLoadHandlers.push(handler);
+  }
 }
 
+function resetMap(map: maplibregl.Map|null, markers: Array<maplibregl.Marker>|null) {
+  if (markers !== null) {
+    while (markers.length > 0) {
+      const marker = markers.pop();
+      if (marker) {
+        marker.remove();
+      }
+    }
+  }
+
+  if (map == null) {
+    return;
+  }
+
+  if (map.getLayer('gtfs-shapes-layer') !== undefined) {
+    map.removeLayer('gtfs-shapes-layer');
+  }
+  if (map.getSource('gtfs-shapes') !== undefined) {
+    map.removeSource('gtfs-shapes');
+  }
+
+  while (mapLoadHandlers.length > 0) {
+    const handler = mapLoadHandlers.pop();
+    map.off('load', handler);
+  }
+}
 
 function addMarkersToMap(results: any, map: maplibregl.Map|null, markers: Array<maplibregl.Marker>|null) {
   if (map === null || markers === null) {
     return;
-  }
-
-  while (markers.length > 0) {
-    const marker = markers.pop();
-    if (marker) {
-      marker.remove();
-    }
   }
 
   const stops = Stop.view(results);
