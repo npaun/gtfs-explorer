@@ -243,12 +243,13 @@ class Shape {
 const MaxStops = 1000;
 
 function setBounds(map: any, bounds: any) {
-  if (!bounds.isEmpty()) {
-    map.fitBounds(bounds, {
-      padding: 50,
-      maxZoom: 15
-    });
+  if (!bounds || bounds.isEmpty()) {
+    return;
   }
+  map.fitBounds(bounds, {
+    padding: 50,
+    maxZoom: 15
+  });
 }
 
 const tooltips : Array<maplibregl.Popup> = [];
@@ -320,8 +321,6 @@ function addShapesToMap(results: any, map: maplibregl.Map|null, bounds: any) {
         'line-width': 2,
       }
     });
-
-    console.log('okey');
   });
 
   // TODO: display this geojson on the map
